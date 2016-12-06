@@ -2272,9 +2272,8 @@ static void P_RunLevelScript(const char *scriptname)
 	}
 	else
 	{
-		COM_BufAddText(va("exec %s\n", scriptname));
+		COM_BufInsertText(va("exec %s\n", scriptname));
 	}
-	COM_BufExecute(); // Run it!
 }
 
 static void P_ForceCharacter(const char *forcecharskin)
