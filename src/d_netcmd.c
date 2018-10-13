@@ -3347,7 +3347,23 @@ static void Command_Playintro_f(void)
   */
 FUNCNORETURN static ATTRNORETURN void Command_Quit_f(void)
 {
-	I_Quit();
+	if (COM_Argc() > 1)
+	{
+		char message[MAX_REASONLENGTH];
+		size_t argc = COM_Argc();
+		size_t i;
+
+		strlcpy(message, COM_Argv(1), sizeof message);
+		for (i = 2; i < argc; i++)
+		{
+			strlcat(message, " ", sizeof message);
+			strlcat(message, COM_Argv(i), sizeof message);
+		}
+
+		I_Quit(message);
+	}
+	else
+		I_Quit(NULL);
 }
 
 void ItemFinder_OnChange(void)
@@ -3954,7 +3970,7 @@ static void Command_RestartAudio_f(void)
 	I_ShutdownSound();
 	I_StartupSound();
 	I_InitMusic();
-	
+
 // These must be called or no sound and music until manually set.
 
 	I_SetSfxVolume(cv_soundvolume.value);
@@ -3962,7 +3978,7 @@ static void Command_RestartAudio_f(void)
 	I_SetMIDIMusicVolume(cv_midimusicvolume.value);
 	if (Playing()) // Gotta make sure the player is in a level
 		P_RestoreMusic(&players[consoleplayer]);
-	
+
 }
 
 /** Quits a game and returns to the title screen.
@@ -3972,7 +3988,24 @@ void Command_ExitGame_f(void)
 {
 	INT32 i;
 
-	D_QuitNetGame();
+	if (COM_Argc() > 1)
+	{
+		char message[MAX_REASONLENGTH];
+		size_t argc = COM_Argc();
+		size_t i;
+
+		strlcpy(message, COM_Argv(1), sizeof message);
+		for (i = 2; i < argc; i++)
+		{
+			strlcat(message, " ", sizeof message);
+			strlcat(message, COM_Argv(i), sizeof message);
+		}
+
+		D_QuitNetGame(message);
+	}
+	else
+		D_QuitNetGame(NULL);
+
 	CL_Reset();
 	CV_ClearChangedFlags();
 

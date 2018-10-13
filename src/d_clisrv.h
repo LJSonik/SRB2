@@ -433,16 +433,19 @@ extern consvar_t cv_playbackspeed;
 #define FILETXHEADER ((size_t)((filetx_pak *)0)->data)
 #define BASESERVERTICSSIZE ((size_t)&(((doomdata_t *)0)->u.serverpak.cmds[0]))
 
-#define KICK_MSG_GO_AWAY     1
-#define KICK_MSG_CON_FAIL    2
-#define KICK_MSG_PLAYER_QUIT 3
-#define KICK_MSG_TIMEOUT     4
-#define KICK_MSG_BANNED      5
+#define KICK_MSG_GO_AWAY            1
+#define KICK_MSG_CON_FAIL           2
+#define KICK_MSG_PLAYER_QUIT        3
+#define KICK_MSG_TIMEOUT            4
+#define KICK_MSG_BANNED             5
 #ifdef NEWPING
-#define KICK_MSG_PING_HIGH   6
+#define KICK_MSG_PING_HIGH          6
 #endif
-#define KICK_MSG_CUSTOM_KICK 7
-#define KICK_MSG_CUSTOM_BAN  8
+#define KICK_MSG_CUSTOM_KICK        7
+#define KICK_MSG_CUSTOM_BAN         8
+#define KICK_MSG_CUSTOM_PLAYER_QUIT 9
+
+#define MAX_REASONLENGTH 30
 
 extern boolean server;
 #define client (!server)
@@ -489,7 +492,7 @@ boolean Playing(void);
 
 // Broadcasts special packets to other players
 //  to notify of game exit
-void D_QuitNetGame(void);
+void D_QuitNetGame(const char *reason);
 
 //? How many ticks to run?
 void TryRunTics(tic_t realtic);

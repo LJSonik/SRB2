@@ -17,6 +17,7 @@
 #include <unistd.h> //for unlink
 #endif
 
+#include "d_clisrv.h"
 #include "i_net.h"
 #include "i_system.h"
 #include "i_video.h"
@@ -69,7 +70,6 @@
 
 #define PREDICTIONQUEUE BACKUPTICS
 #define PREDICTIONMASK (PREDICTIONQUEUE-1)
-#define MAX_REASONLENGTH 30
 
 boolean server = true; // true or false but !server == client
 #define client (!server)
@@ -1754,7 +1754,7 @@ static boolean CL_ServerConnectionSearchTicker(boolean viams, tic_t *asksent)
 		// Quit here rather than downloading files and being refused later.
 		if (serverlist[i].info.numberofplayer >= serverlist[i].info.maxplayer)
 		{
-			D_QuitNetGame();
+			D_QuitNetGame(NULL);
 			CL_Reset();
 			D_StartTitle();
 			M_StartMessage(va(M_GetText("Maximum players reached: %d\n\nPress ESC\n"), serverlist[i].info.maxplayer), NULL, MM_NOTHING);
@@ -1769,7 +1769,7 @@ static boolean CL_ServerConnectionSearchTicker(boolean viams, tic_t *asksent)
 			i = CL_CheckFiles();
 			if (i == 3) // too many files
 			{
-				D_QuitNetGame();
+				D_QuitNetGame(NULL);
 				CL_Reset();
 				D_StartTitle();
 				M_StartMessage(M_GetText(
@@ -1782,7 +1782,7 @@ static boolean CL_ServerConnectionSearchTicker(boolean viams, tic_t *asksent)
 			}
 			else if (i == 2) // cannot join for some reason
 			{
-				D_QuitNetGame();
+				D_QuitNetGame(NULL);
 				CL_Reset();
 				D_StartTitle();
 				M_StartMessage(M_GetText(
@@ -1803,7 +1803,7 @@ static boolean CL_ServerConnectionSearchTicker(boolean viams, tic_t *asksent)
 				// can we, though?
 				if (!CL_CheckDownloadable()) // nope!
 				{
-					D_QuitNetGame();
+					D_QuitNetGame(NULL);
 					CL_Reset();
 					D_StartTitle();
 					M_StartMessage(M_GetText(
@@ -1936,7 +1936,7 @@ static boolean CL_ServerConnectionTicker(boolean viams, const char *tmpsave, tic
 		{
 			CONS_Printf(M_GetText("Network game synchronization aborted.\n"));
 //				M_StartMessage(M_GetText("Network game synchronization aborted.\n\nPress ESC\n"), NULL, MM_NOTHING);
-			D_QuitNetGame();
+			D_QuitNetGame(NULL);
 			CL_Reset();
 			D_StartTitle();
 			return false;
@@ -2799,6 +2799,10 @@ static void Got_KickCmd(UINT8 **p, INT32 playernum)
 			READSTRINGN(*p, reason, MAX_REASONLENGTH+1);
 			CONS_Printf(M_GetText("has been banned (%s)\n"), reason);
 			break;
+		case KICK_MSG_CUSTOM_PLAYER_QUIT:
+			READSTRINGN(*p, reason, MAX_REASONLENGTH+1);
+			CONS_Printf(M_GetText("left the game (%s)\n"), reason);
+			break;
 	}
 
 	if (pnum == consoleplayer)
@@ -2806,7 +2810,7 @@ static void Got_KickCmd(UINT8 **p, INT32 playernum)
 #ifdef DUMPCONSISTENCY
 		if (msg == KICK_MSG_CON_FAIL) SV_SavedGame();
 #endif
-		D_QuitNetGame();
+		D_QuitNetGame(NULL);
 		CL_Reset();
 		D_StartTitle();
 		if (msg == KICK_MSG_CON_FAIL)
@@ -2979,7 +2983,7 @@ static inline void SV_GenContext(void)
 // Called before quitting to leave a net game
 // without hanging the other players
 //
-void D_QuitNetGame(void)
+void D_QuitNetGame(const char *reason)
 {
 	if (!netgame || !netbuffer)
 		return;
@@ -3005,7 +3009,14 @@ void D_QuitNetGame(void)
 	else if (servernode > 0 && servernode < MAXNETNODES && nodeingame[(UINT8)servernode])
 	{
 		netbuffer->packettype = PT_CLIENTQUIT;
-		HSendPacket(servernode, true, 0, 0);
+
+		if (reason)
+		{
+			strcpy((char*)netbuffer->u.textcmd, reason);
+			HSendPacket(servernode, true, 0, strlen(reason) + 1);
+		}
+		else
+			HSendPacket(servernode, true, 0, 0);
 	}
 
 	D_CloseConnection();
@@ -3429,7 +3440,7 @@ static void HandleConnect(SINT8 node)
 static void HandleShutdown(SINT8 node)
 {
 	(void)node;
-	D_QuitNetGame();
+	D_QuitNetGame(NULL);
 	CL_Reset();
 	D_StartTitle();
 	M_StartMessage(M_GetText("Server has shutdown\n\nPress Esc\n"), NULL, MM_NOTHING);
@@ -3443,7 +3454,7 @@ static void HandleShutdown(SINT8 node)
 static void HandleTimeout(SINT8 node)
 {
 	(void)node;
-	D_QuitNetGame();
+	D_QuitNetGame(NULL);
 	CL_Reset();
 	D_StartTitle();
 	M_StartMessage(M_GetText("Server Timeout\n\nPress Esc\n"), NULL, MM_NOTHING);
@@ -3543,7 +3554,7 @@ static void HandlePacketFromAwayNode(SINT8 node)
 				if (!reason)
 					I_Error("Out of memory!\n");
 
-				D_QuitNetGame();
+				D_QuitNetGame(NULL);
 				CL_Reset();
 				D_StartTitle();
 
@@ -3890,13 +3901,26 @@ FILESTAMP
 			nodewaiting[node] = 0;
 			if (netconsole != -1 && playeringame[netconsole])
 			{
-				XBOXSTATIC UINT8 buf[2];
+				XBOXSTATIC UINT8 buf[MAX_REASONLENGTH + 2];
 				buf[0] = (UINT8)netconsole;
 				if (netbuffer->packettype == PT_NODETIMEOUT)
 					buf[1] = KICK_MSG_TIMEOUT;
+				else if (doomcom->datalength > BASEPACKETSIZE && !cv_mute.value)
+					buf[1] = KICK_MSG_CUSTOM_PLAYER_QUIT;
 				else
 					buf[1] = KICK_MSG_PLAYER_QUIT;
-				SendNetXCmd(XD_KICK, &buf, 2);
+
+				if (doomcom->datalength > BASEPACKETSIZE)
+				{
+					char message[MAX_REASONLENGTH];
+					UINT8 *p = buf + 2;
+					strlcpy(message, (char*)netbuffer->u.textcmd, sizeof message);
+					WRITESTRING(p, message);
+					SendNetXCmd(XD_KICK, &buf, strlen(message) + 1 + 2);
+				}
+				else
+					SendNetXCmd(XD_KICK, &buf, 2);
+
 				nodetoplayer[node] = -1;
 				if (nodetoplayer2[node] != -1 && nodetoplayer2[node] >= 0
 					&& playeringame[(UINT8)nodetoplayer2[node]])

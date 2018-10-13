@@ -410,7 +410,7 @@ void I_OsPolling(void)
 				DispatchMessage(&msg);
 			}
 			else // winspec : this is quit message
-				I_Quit();
+				I_Quit(NULL);
 		}
 		if (!appActive && !netgame && !I_ReadyConsole(ci))
 			WaitMessage();
@@ -468,7 +468,7 @@ static void signal_handler(int num)
 	const char *sigmsg;
 	char sigdef[64];
 
-	D_QuitNetGame(); // Fix server freezes
+	D_QuitNetGame(NULL); // Fix server freezes
 	I_ShutdownSystem();
 
 	switch (num)
@@ -644,7 +644,7 @@ void I_Error(const char *error, ...)
 	if (demorecording)
 		G_CheckDemoStatus();
 
-	D_QuitNetGame();
+	D_QuitNetGame(NULL);
 
 	// shutdown everything that was started
 	I_ShutdownSystem();
@@ -717,7 +717,7 @@ static inline VOID ShowEndTxt(HANDLE co)
 //
 // I_Quit: shutdown everything cleanly, in reverse order of Startup.
 //
-void I_Quit(void)
+void I_Quit(const char *reason)
 {
 	HANDLE co = GetStdHandle(STD_OUTPUT_HANDLE);
 	// when recording a demo, should exit using 'q',
@@ -731,7 +731,7 @@ void I_Quit(void)
 	// maybe it needs that the ticcount continues,
 	// or something else that will be finished by I_ShutdownSystem(),
 	// so do it before.
-	D_QuitNetGame();
+	D_QuitNetGame(reason);
 
 	// shutdown everything that was started
 	I_ShutdownSystem();

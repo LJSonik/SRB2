@@ -341,7 +341,7 @@ static void signal_handler(INT32 num)
 	I_OutputMsg("signal_handler() error: %s\n", sigmsg);
 	signal(num, SIG_DFL);               //default signal action
 	raise(num);
-	I_Quit();
+	I_Quit(NULL);
 }
 #endif
 
@@ -350,7 +350,7 @@ FUNCNORETURN static ATTRNORETURN void quit_handler(int num)
 {
 	signal(num, SIG_DFL); //default signal action
 	raise(num);
-	I_Quit();
+	I_Quit(NULL);
 }
 #endif
 
@@ -2262,7 +2262,7 @@ INT32 I_StartupSystem(void)
 //
 // I_Quit
 //
-void I_Quit(void)
+void I_Quit(const char *reason)
 {
 	static SDL_bool quiting = SDL_FALSE;
 
@@ -2284,7 +2284,7 @@ void I_Quit(void)
 	if (metalrecording)
 		G_StopMetalRecording();
 
-	D_QuitNetGame();
+	D_QuitNetGame(reason);
 	I_ShutdownMusic();
 	I_ShutdownSound();
 	I_ShutdownCD();
@@ -2440,7 +2440,7 @@ void I_Error(const char *error, ...)
 	if (metalrecording)
 		G_StopMetalRecording();
 
-	D_QuitNetGame();
+	D_QuitNetGame(NULL);
 	I_ShutdownMusic();
 	I_ShutdownSound();
 	I_ShutdownCD();

@@ -3957,7 +3957,7 @@ static void M_SelectableClearMenus(INT32 choice)
 static void M_UltimateCheat(INT32 choice)
 {
 	(void)choice;
-	I_Quit();
+	I_Quit(NULL);
 }
 
 static void M_GetAllEmeralds(INT32 choice)
@@ -7340,7 +7340,7 @@ void M_QuitResponse(INT32 ch)
 			I_Sleep();
 		}
 	}
-	I_Quit();
+	I_Quit(NULL);
 }
 
 static void M_QuitSRB2(INT32 choice)

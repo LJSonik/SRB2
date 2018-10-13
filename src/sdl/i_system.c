@@ -229,7 +229,7 @@ FUNCNORETURN static ATTRNORETURN void signal_handler(INT32 num)
 	const char *      sigmsg;
 	char        sigdef[32];
 
-	D_QuitNetGame(); // Fix server freezes
+	D_QuitNetGame(NULL); // Fix server freezes
 
 	switch (num)
 	{
@@ -267,14 +267,14 @@ FUNCNORETURN static ATTRNORETURN void signal_handler(INT32 num)
 	I_ShutdownSystem();
 	signal(num, SIG_DFL);               //default signal action
 	raise(num);
-	I_Quit();
+	I_Quit(NULL);
 }
 
 FUNCNORETURN static ATTRNORETURN void quit_handler(int num)
 {
 	signal(num, SIG_DFL); //default signal action
 	raise(num);
-	I_Quit();
+	I_Quit(NULL);
 }
 
 #ifdef HAVE_TERMIOS
@@ -2095,7 +2095,7 @@ INT32 I_StartupSystem(void)
 //
 // I_Quit
 //
-void I_Quit(void)
+void I_Quit(const char *reason)
 {
 	static SDL_bool quiting = SDL_FALSE;
 
@@ -2117,7 +2117,7 @@ void I_Quit(void)
 	if (metalrecording)
 		G_StopMetalRecording();
 
-	D_QuitNetGame();
+	D_QuitNetGame(reason);
 	I_ShutdownMusic();
 	I_ShutdownSound();
 	I_ShutdownCD();
@@ -2233,7 +2233,7 @@ void I_Error(const char *error, ...)
 	if (metalrecording)
 		G_StopMetalRecording();
 
-	D_QuitNetGame();
+	D_QuitNetGame(NULL);
 	I_ShutdownMusic();
 	I_ShutdownSound();
 	I_ShutdownCD();

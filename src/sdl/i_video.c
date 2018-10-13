@@ -835,7 +835,7 @@ void I_GetEvent(void)
 				Impl_HandleJoystickButtonEvent(evt.jbutton, evt.type);
 				break;
 			case SDL_QUIT:
-				I_Quit();
+				I_Quit(NULL);
 				M_QuitResponse('y');
 				break;
 		}

@@ -82,7 +82,7 @@ ticcmd_t *I_BaseTiccmd2(void);
 
 /**	\brief Called by M_Responder when quit is selected, return exit code 0
 */
-void I_Quit(void) FUNCNORETURN;
+void I_Quit(const char *reason) FUNCNORETURN;
 
 typedef enum
 {

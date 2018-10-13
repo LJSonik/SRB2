@@ -5559,7 +5559,7 @@ boolean G_CheckDemoStatus(void)
 	if (demoplayback)
 	{
 		if (singledemo)
-			I_Quit();
+			I_Quit(NULL);
 		G_StopDemo();
 
 		if (modeattacking)

@@ -32,8 +32,9 @@ ticcmd_t *I_BaseTiccmd2(void)
 	return NULL;
 }
 
-void I_Quit(void)
+void I_Quit(const char *reason)
 {
+	(void)reason;
 	exit(0);
 }
 
