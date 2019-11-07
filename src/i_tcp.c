@@ -211,7 +211,7 @@ static UINT8 UPNP_support = TRUE;
 #define SELECTTEST
 #endif
 
-#define DEFAULTPORT "5029"
+#define DEFAULTPORT "5030"
 
 #if defined (USE_WINSOCK) && !defined (NONET)
 typedef SOCKET SOCKET_TYPE;

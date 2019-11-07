@@ -163,6 +163,8 @@ static consvar_t cv_showjoinaddress = {"showjoinaddress", "On", 0, CV_OnOff, NUL
 static CV_PossibleValue_t playbackspeed_cons_t[] = {{1, "MIN"}, {10, "MAX"}, {0, NULL}};
 consvar_t cv_playbackspeed = {"playbackspeed", "1", 0, playbackspeed_cons_t, NULL, 0, NULL, NULL, 0, 0, NULL};
 
+consvar_t cv_rendezvousserver = {"rendezvousserver", "82.226.236.20:5029", CV_SAVE, NULL, NULL, 0, NULL, NULL, 0, 0, NULL};
+
 static inline void *G_DcpyTiccmd(void* dest, const ticcmd_t* src, const size_t n)
 {
 	const size_t d = n / sizeof(ticcmd_t);
@@ -1624,8 +1626,32 @@ static void SendAskInfo(INT32 node, boolean viams)
 	HSendPacket(node, false, 0, sizeof (askinfo_pak));
 
 	// Also speak to the MS.
-	if (viams && node != 0 && node != BROADCASTADDR)
-		SendAskInfoViaMS(node, asktime);
+	//if (viams && node != 0 && node != BROADCASTADDR)
+	if (node != 0 && node != BROADCASTADDR)
+	{
+		SINT8 hpnode = I_NetMakeNode(cv_rendezvousserver.string);
+		if (hpnode != -1)
+		{
+			if (I_GetNodeAddress(node))
+			{
+				strcpy((char*)netbuffer, "hole1111");
+				strcat((char*)netbuffer, I_GetNodeAddress(node));
+
+				doomcom->datalength = strlen((char*)netbuffer);
+				doomcom->remotenode = hpnode;
+				I_NetSend();
+				I_NetSend();
+				I_NetSend();
+			}
+			else
+			{
+				CONS_Printf("No address for that node\n");
+			}
+
+			//I_NetFreeNodenum(hpnode);
+		}
+	}
+		//SendAskInfoViaMS(node, asktime);
 }
 
 serverelem_t serverlist[MAXSERVERLIST];
@@ -2971,6 +2997,7 @@ void D_ClientServerInit(void)
 #ifdef DUMPCONSISTENCY
 	CV_RegisterVar(&cv_dumpconsistency);
 #endif
+	CV_RegisterVar(&cv_rendezvousserver);
 	Ban_Load_File(false);
 #endif
 
@@ -4788,6 +4815,21 @@ FILESTAMP
 	// the server send before because in single player is beter
 
 	MasterClient_Ticker(); // Acking the Master Server
+
+	if (netgame && server && !(gametime % (10 * TICRATE)))
+	{
+		SINT8 hpnode = I_NetMakeNode(cv_rendezvousserver.string);
+		if (hpnode != -1)
+		{
+			strcpy((char*)netbuffer, "hole2222");
+
+			doomcom->datalength = strlen((char*)netbuffer);
+			doomcom->remotenode = hpnode;
+			I_NetSend();
+
+			//I_NetFreeNodenum(hpnode);
+		}
+	}
 
 	if (client)
 	{
